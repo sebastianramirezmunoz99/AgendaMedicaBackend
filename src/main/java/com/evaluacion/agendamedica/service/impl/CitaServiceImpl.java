@@ -12,6 +12,8 @@ import com.evaluacion.agendamedica.service.CitaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,7 +29,23 @@ public class CitaServiceImpl implements CitaService {
     @Override
     @Transactional(readOnly = true)
     public List<CitaResDto> obtenerTodas() {
-        return citaRepository.findAll().stream().map(this::mapearADto).collect(Collectors.toList());
+        // 1. Extraer quién hace la petición desde el Token JWT
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        List<Cita> todasLasCitas = citaRepository.findAll();
+
+        // 2. Si es paciente (ROLE_USER), filtramos la lista para que solo vea las suyas
+        if (!isAdmin) {
+            todasLasCitas = todasLasCitas.stream()
+                    .filter(cita -> cita.getPaciente() != null &&
+                            cita.getPaciente().getUsuario() != null &&
+                            cita.getPaciente().getUsuario().getUsername().equals(username))
+                    .collect(Collectors.toList());
+        }
+
+        return todasLasCitas.stream().map(this::mapearADto).collect(Collectors.toList());
     }
 
     @Override

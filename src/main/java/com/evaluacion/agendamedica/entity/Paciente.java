@@ -13,6 +13,11 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class Paciente {
 
+    // Relación para que el backend sepa qué usuario es qué paciente
+    @OneToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

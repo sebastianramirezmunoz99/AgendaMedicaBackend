@@ -26,7 +26,21 @@ public class FichaClinicaServiceImpl implements FichaClinicaService {
     @Override
     @Transactional(readOnly = true)
     public List<FichaClinicaResDto> obtenerTodas() {
-        return fichaRepository.findAll().stream().map(this::mapearADto).collect(Collectors.toList());
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        List<FichaClinica> todas = fichaRepository.findAll();
+
+        if (!isAdmin) {
+            todas = todas.stream()
+                    .filter(ficha -> ficha.getCita().getPaciente() != null &&
+                            ficha.getCita().getPaciente().getUsuario() != null &&
+                            ficha.getCita().getPaciente().getUsuario().getUsername().equals(username))
+                    .collect(Collectors.toList());
+        }
+
+        return todas.stream().map(this::mapearADto).collect(Collectors.toList());
     }
 
     @Override
