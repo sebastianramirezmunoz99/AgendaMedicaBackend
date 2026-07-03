@@ -20,7 +20,7 @@ buildNumber.properties
 *.iml
 *.iws
 *.ipr
-out/
+/out/
 
 # ==========================================
 # VISUAL STUDIO CODE (Configuraciones locales)
